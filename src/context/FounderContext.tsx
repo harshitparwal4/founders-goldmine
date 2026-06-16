@@ -55,6 +55,8 @@ interface FounderContextType {
   addChatMessage: (sender: "user" | "aryan", text: string) => void;
   clearChatHistory: () => void;
   resetOS: () => void;
+  customTools: Tool[];
+  addCustomTool: (tool: Omit<Tool, "id">, phaseId: number) => void;
 }
 
 const FounderContext = createContext<FounderContextType | undefined>(undefined);
@@ -111,6 +113,7 @@ export const FounderProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [savedTools, setSavedTools] = useState<string[]>(DEFAULT_SAVED_TOOLS);
   const [streak, setStreak] = useState<number>(7);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(DEFAULT_CHAT);
+  const [customTools, setCustomTools] = useState<Tool[]>([]);
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -121,6 +124,7 @@ export const FounderProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const storedTools = localStorage.getItem("founder_saved_tools");
       const storedStreak = localStorage.getItem("founder_streak");
       const storedChat = localStorage.getItem("founder_chat_history");
+      const storedCustomTools = localStorage.getItem("founder_custom_tools");
 
       if (storedProfile) setProfileState(JSON.parse(storedProfile));
       if (storedTrack) setSelectedTrackState(storedTrack);
@@ -128,8 +132,22 @@ export const FounderProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (storedTools) setSavedTools(JSON.parse(storedTools));
       if (storedStreak) setStreak(Number(storedStreak));
       if (storedChat) setChatHistory(JSON.parse(storedChat));
+      if (storedCustomTools) setCustomTools(JSON.parse(storedCustomTools));
     }
   }, []);
+
+  const addCustomTool = (tool: Omit<Tool, "id">, phaseId: number) => {
+    setCustomTools((prev) => {
+      const newTool: Tool = {
+        ...tool,
+        id: `custom-tool-${Date.now()}`,
+        phaseId: phaseId
+      };
+      const updated = [...prev, newTool];
+      localStorage.setItem("founder_custom_tools", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const setProfile = (newFields: Partial<UserProfile>) => {
     setProfileState((prev) => {
@@ -192,6 +210,7 @@ export const FounderProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSavedTools(DEFAULT_SAVED_TOOLS);
     setStreak(7);
     setChatHistory(DEFAULT_CHAT);
+    setCustomTools([]);
     localStorage.clear();
   };
 
@@ -262,7 +281,9 @@ export const FounderProvider: React.FC<{ children: React.ReactNode }> = ({ child
         chatHistory,
         addChatMessage,
         clearChatHistory,
-        resetOS
+        resetOS,
+        customTools,
+        addCustomTool
       }}
     >
       {children}

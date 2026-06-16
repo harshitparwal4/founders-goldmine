@@ -8,7 +8,8 @@ import { AryanAI } from "@/components/ai/AryanAI";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { 
   Trophy, Flame, Search, MessageSquareCode, Sparkles, LayoutDashboard, 
-  Map, Settings, DollarSign, Rocket, BookOpen, Menu, X, ChevronDown 
+  Map, Settings, DollarSign, Rocket, BookOpen, Menu, X, ChevronDown,
+  Milestone
 } from "lucide-react";
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -20,9 +21,11 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [isAryanOpen, setIsAryanOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showTrackDropdown, setShowTrackDropdown] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Parse URL search parameters to open Aryan by default if required
   useEffect(() => {
+    setMounted(true);
     if (searchParams?.get("aryan") === "open") {
       setIsAryanOpen(true);
     }
@@ -31,6 +34,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
     { name: "Journey", href: "/journey", icon: <Map className="w-4 h-4" /> },
+    { name: "Roadmap", href: "/roadmap", icon: <Milestone className="w-4 h-4" /> },
     { name: "Tools", href: "/tools", icon: <Settings className="w-4 h-4" /> },
     { name: "Grant Radar", href: "/grants", icon: <DollarSign className="w-4 h-4" /> },
     { name: "Launch Center", href: "/launch-center", icon: <Rocket className="w-4 h-4" /> },
@@ -79,7 +83,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
               className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/60 border border-brand-border rounded-lg text-xs font-semibold hover:border-brand-accent transition-colors text-slate-200 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-brand-accent" />
-              <span>{selectedTrack}</span>
+              <span>{mounted ? selectedTrack : "Sustainable/Recycling"}</span>
               <ChevronDown className="w-3 h-3 text-text-secondary" />
             </button>
 
@@ -145,14 +149,14 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           {/* User Score Pill */}
           <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-900/60 border border-brand-border rounded-lg text-xs">
             <Trophy className="w-3.5 h-3.5 text-brand-accent" />
-            <span className="font-semibold text-text-primary">{founderScore}</span>
+            <span className="font-semibold text-text-primary">{mounted ? founderScore : 72}</span>
             <span className="text-text-secondary text-[10px]">Score</span>
           </div>
 
           {/* Streak Counter */}
           <div className="flex items-center gap-1 px-2 py-1 bg-brand-warning/15 border border-brand-warning/20 rounded-lg text-xs text-brand-warning font-semibold">
             <Flame className="w-3.5 h-3.5" />
-            <span>{streak}d</span>
+            <span>{mounted ? streak : 7}d</span>
           </div>
 
           {/* System A/B Toggle button */}

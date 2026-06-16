@@ -5,13 +5,15 @@ import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/ui/AppShell";
 import { useFounder } from "@/context/FounderContext";
 import { toolsData, Tool } from "@/data/tools";
+import { phasesData } from "@/data/phases";
 import { 
   Search, Settings, Filter, Save, Scale, AlertCircle, 
-  ExternalLink, CheckCircle, Info, Landmark, ChevronDown 
+  ExternalLink, CheckCircle, Info, Landmark, ChevronDown,
+  Plus, X
 } from "lucide-react";
 
 export default function Tools() {
-  const { savedTools, toggleSaveTool } = useFounder();
+  const { savedTools, toggleSaveTool, customTools, addCustomTool } = useFounder();
   const searchParams = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,16 +22,28 @@ export default function Tools() {
   const [showComparison, setShowComparison] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
+  // Modal form states for custom tools
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newUrl, setNewUrl] = useState("");
+  const [newCategory, setNewCategory] = useState("Validation");
+  const [newPhaseId, setNewPhaseId] = useState(0);
+  const [newDescription, setNewDescription] = useState("");
+  const [newPricing, setNewPricing] = useState("Free");
+  const [successAlert, setSuccessAlert] = useState("");
+
+  const combinedTools = [...toolsData, ...customTools];
+
   // Check if a specific tool ID was requested in URL search params (e.g., from command center search redirect)
   useEffect(() => {
     const id = searchParams?.get("id");
     if (id) {
-      const tool = toolsData.find(t => t.id === id);
+      const tool = combinedTools.find(t => t.id === id);
       if (tool) {
         setSearchQuery(tool.name);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, combinedTools]);
 
   const categories = [
     "All",
@@ -47,7 +61,7 @@ export default function Tools() {
   ];
 
   // Filtering tools
-  const filteredTools = toolsData.filter(tool => {
+  const filteredTools = combinedTools.filter(tool => {
     const categoryMatch = selectedCategory === "All" || tool.category === selectedCategory;
     const query = searchQuery.toLowerCase();
     const searchMatch = 
@@ -69,7 +83,7 @@ export default function Tools() {
   };
 
   const getCompareToolsData = () => {
-    return toolsData.filter(t => selectedToolsToCompare.includes(t.id));
+    return combinedTools.filter(t => selectedToolsToCompare.includes(t.id));
   };
 
   // Mock static comparison details to simulate heavy database records
@@ -130,7 +144,7 @@ export default function Tools() {
           curve: "Low (Intuitive bookkeeping)"
         };
       default:
-        const tool = toolsData.find(t => t.id === toolId);
+        const tool = combinedTools.find(t => t.id === toolId);
         return {
           price: tool?.pricingDetails || "Varies",
           ease: "Medium",
@@ -140,6 +154,52 @@ export default function Tools() {
           curve: tool?.difficulty || "Medium"
         };
     }
+  };
+
+  // Handle submitting custom resource
+  const handleSubmitCustomTool = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim() || !newUrl.trim() || !newDescription.trim()) return;
+
+    // Standardize URL
+    let formattedUrl = newUrl.trim();
+    if (!/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    const customToolField = {
+      name: newName.trim(),
+      category: newCategory,
+      description: newDescription.trim(),
+      website: formattedUrl,
+      pricing: newPricing,
+      pricingDetails: `${newPricing} customized tool`,
+      country: "Global",
+      indiaScore: 90,
+      aiScore: 80,
+      founderRating: 5.0,
+      difficulty: "Easy" as const,
+      alternatives: [],
+      useCases: ["Custom task execution"],
+      tags: ["Custom", newCategory],
+      lastVerified: "Just now",
+      affiliateEligible: false
+    };
+
+    // Save custom tool via Context Provider
+    addCustomTool(customToolField, newPhaseId);
+
+    // Reset Form and close modal
+    setNewName("");
+    setNewUrl("");
+    setNewDescription("");
+    setShowAddModal(false);
+
+    // Trigger Success Alert
+    setSuccessAlert(`"${customToolField.name}" has been successfully added to Phase ${newPhaseId}!`);
+    setTimeout(() => {
+      setSuccessAlert("");
+    }, 4000);
   };
 
   return (
@@ -155,16 +215,33 @@ export default function Tools() {
               IMDb-style index for startup building software in India. Bookmark items to lock progress configurations on your dashboard.
             </p>
           </div>
-          {selectedToolsToCompare.length > 1 && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowComparison(prev => !prev)}
-              className="px-4 py-2 bg-brand-accent text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-brand-accent/20 flex items-center gap-1.5 cursor-pointer"
+              onClick={() => setShowAddModal(true)}
+              className="px-3.5 py-2 bg-brand-accent text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-brand-accent/25 hover:shadow-brand-accent/40 hover:scale-[1.02] transition-all cursor-pointer flex items-center gap-1.5"
             >
-              <Scale className="w-4 h-4" />
-              <span>{showComparison ? "Close Comparison" : `Compare Selected (${selectedToolsToCompare.length})`}</span>
+              <Plus className="w-4 h-4" />
+              <span>Add Custom Resource</span>
             </button>
-          )}
+            {selectedToolsToCompare.length > 1 && (
+              <button
+                onClick={() => setShowComparison(prev => !prev)}
+                className="px-4 py-2 bg-brand-accent text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-brand-accent/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Scale className="w-4 h-4" />
+                <span>{showComparison ? "Close Comparison" : `Compare Selected (${selectedToolsToCompare.length})`}</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Success Alert toast banner */}
+        {successAlert && (
+          <div className="p-4 bg-brand-success/10 border border-brand-success/30 text-brand-success text-xs rounded-xl flex items-center gap-2.5 shadow-[0_0_15px_rgba(34,197,94,0.15)] text-left">
+            <CheckCircle className="w-5 h-5 flex-shrink-0 animate-bounce" />
+            <span className="font-semibold text-slate-200">{successAlert}</span>
+          </div>
+        )}
 
         {/* Comparison Dashboard overlay */}
         {showComparison && selectedToolsToCompare.length > 1 && (
@@ -305,6 +382,7 @@ export default function Tools() {
           {filteredTools.map((tool) => {
             const isSaved = savedTools.includes(tool.id);
             const isCompared = selectedToolsToCompare.includes(tool.id);
+            const isCustomTool = tool.id.startsWith("custom-tool-");
 
             return (
               <div 
@@ -315,9 +393,16 @@ export default function Tools() {
                   
                   {/* Card header */}
                   <div className="flex justify-between items-start gap-2">
-                    <span className="text-[9px] font-mono font-bold text-brand-accent uppercase tracking-wide bg-brand-accent/5 px-2 py-0.5 rounded border border-brand-accent/15">
-                      {tool.category}
-                    </span>
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <span className="text-[9px] font-mono font-bold text-brand-accent uppercase tracking-wide bg-brand-accent/5 px-2 py-0.5 rounded border border-brand-accent/15">
+                        {tool.category}
+                      </span>
+                      {isCustomTool && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-accent/20 border border-brand-accent/35 text-brand-accent font-mono">
+                          Custom Link
+                        </span>
+                      )}
+                    </div>
                     
                     <div className="flex items-center gap-1">
                       {/* Compare checkbox */}
@@ -402,6 +487,149 @@ export default function Tools() {
         </div>
 
       </div>
+
+      {/* Onboarding Add Custom Tool Modal Dialog */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-[#0F162A]/90 border border-brand-border rounded-2xl shadow-2xl glass-panel-heavy overflow-hidden p-6 sm:p-8 text-left space-y-6">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-brand-border">
+              <div className="flex items-center gap-2">
+                <Plus className="w-5 h-5 text-brand-accent animate-pulse" />
+                <span className="font-display font-bold text-sm text-white">Add Custom Resource</span>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-xs text-text-secondary hover:text-brand-danger transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmitCustomTool} className="space-y-4">
+              
+              {/* Tool Name */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono text-text-secondary uppercase">Resource Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. IndiaMART Wholesale Portal"
+                  required
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full bg-slate-950 border border-brand-border rounded-xl p-2.5 text-xs text-text-primary placeholder:text-text-secondary focus:border-brand-accent focus:outline-none"
+                />
+              </div>
+
+              {/* Website URL */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono text-text-secondary uppercase">Website URL</label>
+                <input
+                  type="text"
+                  placeholder="e.g. indiamart.com or https://..."
+                  required
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  className="w-full bg-slate-950 border border-brand-border rounded-xl p-2.5 text-xs text-text-primary placeholder:text-text-secondary focus:border-brand-accent focus:outline-none"
+                />
+              </div>
+
+              {/* Grid selectors */}
+              <div className="grid grid-cols-2 gap-4">
+                
+                {/* Category Selection */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono text-text-secondary uppercase">Category</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="w-full bg-slate-950 border border-brand-border rounded-xl p-2.5 text-xs text-text-primary focus:border-brand-accent focus:outline-none cursor-pointer"
+                  >
+                    {categories.filter(c => c !== "All").map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Target Phase Selection */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono text-text-secondary uppercase">Target Phase</label>
+                  <select
+                    value={newPhaseId}
+                    onChange={(e) => setNewPhaseId(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-brand-border rounded-xl p-2.5 text-xs text-text-primary focus:border-brand-accent focus:outline-none cursor-pointer"
+                  >
+                    {phasesData.map((phase) => (
+                      <option key={phase.id} value={phase.id}>
+                        Phase {phase.id}: {phase.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+              </div>
+
+              {/* Pricing selector */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono text-text-secondary uppercase">Pricing Type</label>
+                <div className="flex gap-3">
+                  {["Free", "Freemium", "Paid"].map((opt) => (
+                    <button
+                      type="button"
+                      key={opt}
+                      onClick={() => setNewPricing(opt)}
+                      className={`flex-1 p-2 text-xs rounded-xl border transition-all cursor-pointer ${
+                        newPricing === opt
+                          ? "bg-brand-accent/20 border-brand-accent text-brand-accent font-bold"
+                          : "bg-slate-950 border-brand-border text-text-secondary hover:border-slate-700"
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Short Description */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono text-text-secondary uppercase">Short Description</label>
+                <textarea
+                  rows={3}
+                  placeholder="Describe what you use this website for (e.g. Sourcing suppliers for plastic molds)..."
+                  required
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="w-full bg-slate-950 border border-brand-border rounded-xl p-2.5 text-xs text-text-primary placeholder:text-text-secondary focus:border-brand-accent focus:outline-none"
+                />
+              </div>
+
+              {/* Action buttons */}
+              <div className="pt-4 flex justify-end gap-3 border-t border-brand-border">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4.5 py-2.5 border border-brand-border hover:border-slate-700 hover:text-white text-text-secondary text-xs rounded-xl transition-all cursor-pointer font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-brand-accent text-slate-950 text-xs font-bold rounded-xl shadow-lg shadow-brand-accent/25 hover:shadow-brand-accent/40 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Submit to Roadmap</span>
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

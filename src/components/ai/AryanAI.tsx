@@ -9,6 +9,8 @@ export const AryanAI: React.FC<{ sidebarMode?: boolean }> = ({ sidebarMode = fal
   const { profile, selectedTrack, completedTasks, chatHistory, addChatMessage, clearChatHistory } = useFounder();
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isLiveMode, setIsLiveMode] = useState(true);
+  const [apiNotice, setApiNotice] = useState("");
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll to bottom of chat
@@ -18,7 +20,6 @@ export const AryanAI: React.FC<{ sidebarMode?: boolean }> = ({ sidebarMode = fal
 
   // Context-specific suggestion prompts based on the current phase
   const getSuggestionChips = () => {
-    // Check which phase is active based on task completion
     const totalPhase0Tasks = phasesData[0].tasks.length;
     const completedPhase0 = phasesData[0].tasks.filter(t => completedTasks.includes(t.id)).length;
     
@@ -42,25 +43,67 @@ export const AryanAI: React.FC<{ sidebarMode?: boolean }> = ({ sidebarMode = fal
     "religion", "hindu", "muslim", "christian", "gossip", "bollywood", "cricket", "movie", "entertainment"
   ];
 
-  const handleSendMessage = (textToSend: string) => {
+  const handleSendMessage = async (textToSend: string) => {
     if (!textToSend.trim()) return;
 
-    // Log User message
+    // Construct the User message object for immediate sync in context API
+    const userMsg = {
+      id: Math.random().toString(36).substring(7),
+      sender: "user" as const,
+      text: textToSend,
+      timestamp: new Date().toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      })
+    };
+
+    // Add User message
     addChatMessage("user", textToSend);
     setInputMessage("");
     setIsTyping(true);
 
+    const fullMessages = [...chatHistory, userMsg];
+
+    // Attempt calling server-side API if Live AI mode is set
+    if (isLiveMode) {
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            messages: fullMessages,
+            profile,
+            selectedTrack
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.reply) {
+          addChatMessage("aryan", data.reply);
+          setIsTyping(false);
+          return;
+        } else if (data.error === "API_KEY_MISSING") {
+          setIsLiveMode(false);
+          setApiNotice("API key missing. Running in local preset mode. Configure your .env.local to activate Live AI.");
+        }
+      } catch (err) {
+        console.error("Live AI Connection Failed, falling back to preset rules:", err);
+      }
+    }
+
+    // Local Fallback Pre-programmed Rules
     setTimeout(() => {
       let reply = "";
       const textLower = textToSend.toLowerCase();
-
-      // Check forbidden guardrails
       const hitsForbidden = forbiddenKeywords.some(keyword => textLower.includes(keyword));
 
       if (hitsForbidden) {
         reply = "I am built strictly for business execution.\n\nLet's get back to building.\n\nWhat are we working on?\n\nYOUR NEXT IMMEDIATE STEP\nFocus on mapping your target customer demographics rather than consuming entertainment content.";
       }
-      // Specific triggers
       else if (textLower.includes("problem statement") || textLower.includes("problem")) {
         reply = `To write a sharp problem statement, skip the jargon. What is the exact leakage or friction? For your business type (${profile.businessType}), you must specify: Who suffers, what is the cost of delay, and why current alternatives fail.\n\nHere is a draft:\n"Indian MSMEs face complex compliance frameworks for raw material scrap procurement, spending over ₹40,000/month on consultancies with 3-week clearance delays. We provide pre-verified supply routes with automated SPCB clearance logs."\n\nYOUR NEXT IMMEDIATE STEP\nRewrite your problem statement using this format and share it with 3 prospective buyers for feedback.`;
       } 
@@ -83,26 +126,31 @@ export const AryanAI: React.FC<{ sidebarMode?: boolean }> = ({ sidebarMode = fal
         reply = `Sourcing in India is about managing cash flow and trust. When using platforms like IndiaMART:\n- Filter only by GST-verified suppliers.\n- Never pay 100% upfront. Negotiate 30% advance / 70% on dispatch.\n- Ask for raw material test certifications (especially for sustainable/plastic recycling loops).\n\nYOUR NEXT IMMEDIATE STEP\nCall 3 verified suppliers on IndiaMART and request a small trial batch of samples to inspect quality, before signing a bulk contract.`;
       }
       else {
-        // Generates typical Naval/Kunal response based on track
         reply = `I see you are navigating the ${selectedTrack} track in ${profile.location}. The biggest trap for you right now is analysis paralysis. Do not build frameworks for problems you do not have yet. \n\nFocus strictly on your active execution stage. Validate demand, negotiate supplier MOQ samples, keep your fixed costs at zero, and collect payment deposits as fast as humanly possible.\n\nYOUR NEXT IMMEDIATE STEP\nIdentify your single biggest bottleneck preventing your first sales conversion today, and allocate 4 hours to solve only that task.`;
       }
 
       addChatMessage("aryan", reply);
       setIsTyping(false);
-    }, 1200);
+    }, 1000);
   };
 
   return (
     <div className={`flex flex-col h-full bg-[#0F162A]/60 border-l border-brand-border glass-panel relative ${sidebarMode ? "w-full" : "rounded-xl overflow-hidden shadow-xl"}`}>
+      
       {/* Chat Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#1E293B]/50 border-b border-brand-border">
         <div className="flex items-center gap-2">
           <div className="p-1 bg-brand-accent/20 rounded border border-brand-accent/30 animate-pulse">
             <Bot className="w-4 h-4 text-brand-accent" />
           </div>
-          <div>
-            <div className="text-xs text-text-secondary font-mono uppercase tracking-wider">Operating Partner</div>
-            <h3 className="font-bold text-sm text-text-primary">Aryan AI</h3>
+          <div className="text-left">
+            <div className="text-[9px] text-text-secondary font-mono uppercase tracking-wider flex items-center gap-1.5">
+              <span>Operating Partner</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold border ${isLiveMode ? "bg-brand-success/15 text-brand-success border-brand-success/20" : "bg-slate-800 text-slate-400 border-slate-700"}`}>
+                {isLiveMode ? "Live AI Mode" : "Local Preset"}
+              </span>
+            </div>
+            <h3 className="font-bold text-sm text-text-primary mt-0.5">Aryan AI</h3>
           </div>
         </div>
         <button
@@ -113,6 +161,14 @@ export const AryanAI: React.FC<{ sidebarMode?: boolean }> = ({ sidebarMode = fal
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Notice alert for missing key */}
+      {apiNotice && (
+        <div className="px-4 py-2 bg-slate-900 border-b border-brand-border flex items-start gap-2 text-left text-[10px] text-text-secondary">
+          <ShieldAlert className="w-4.5 h-4.5 text-brand-warning flex-shrink-0 mt-0.5" />
+          <span>{apiNotice}</span>
+        </div>
+      )}
 
       {/* Chat messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 font-sans text-sm">
@@ -139,7 +195,7 @@ export const AryanAI: React.FC<{ sidebarMode?: boolean }> = ({ sidebarMode = fal
               >
                 {msg.sender === "user" ? <User className="w-4.5 h-4.5" /> : <Bot className="w-4.5 h-4.5" />}
               </div>
-              <div className="flex flex-col max-w-[80%]">
+              <div className="flex flex-col max-w-[80%] text-left">
                 <div
                   className={`px-3 py-2 rounded-lg text-sm whitespace-pre-line leading-relaxed ${
                     msg.sender === "user"

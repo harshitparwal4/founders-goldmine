@@ -40,7 +40,7 @@ export const phasesData: Phase[] = [
       "Committing money on branding before knowing what you are selling",
       "Assuming business building requires instant full-time resignations"
     ],
-    toolIds: ["google-trends", "validate-my-saas", "worth-build"],
+    toolIds: ["google-trends", "validate-my-saas", "worth-build", "stratup-ai", "namelix"],
     tasks: [
       { id: "p0-t1", text: "Complete the Founder Onboarding Quiz to benchmark your baseline metrics.", category: "Clarity" },
       { id: "p0-t2", text: "Write down a specific problem statement you want to solve in under 100 words.", category: "Clarity" },
@@ -71,7 +71,7 @@ export const phasesData: Phase[] = [
       "Building a complex web app before checking search volumes",
       "Ignoring existing local competitors who have already achieved scale"
     ],
-    toolIds: ["google-trends", "ahrefs", "semrush", "similarweb", "tracxn"],
+    toolIds: ["google-trends", "ahrefs", "semrush", "similarweb", "tracxn", "dropship-io", "sellthetrend"],
     tasks: [
       { id: "p1-t1", text: "Search target keywords in Google Trends and note historical search demand.", category: "Planning" },
       { id: "p1-t2", text: "Map out details (pricing, features, strengths) of 3 direct competitors in India.", category: "Planning" },
@@ -164,7 +164,7 @@ export const phasesData: Phase[] = [
       "Underestimating Indian shipping/freight times and import customs clearances",
       "Ignoring unit economics, leading to selling products at a net loss"
     ],
-    toolIds: ["indiamart", "zetwerk", "shiprocket", "jumbotail"],
+    toolIds: ["indiamart", "zetwerk", "shiprocket", "jumbotail", "autods"],
     tasks: [
       { id: "p4-t1", text: "Draft specifications and target unit economics for your initial product/service.", category: "Product" },
       { id: "p4-t2", text: "Contact 3 verified manufacturers on IndiaMART or TradeIndia to compare rates.", category: "Product" },
@@ -196,7 +196,7 @@ export const phasesData: Phase[] = [
       "Failing to verify checkouts on mobile screens (where 80% of traffic exists in India)",
       "Leaving payment gateways in sandbox mode during launch announcements"
     ],
-    toolIds: ["shopify", "framer", "hostinger", "razorpay", "cashfree", "instamojo", "stripe"],
+    toolIds: ["shopify", "framer", "hostinger", "razorpay", "cashfree", "instamojo", "stripe", "buildyourstore-ai", "playto-so"],
     tasks: [
       { id: "p5-t1", text: "Register a brand domain name on Hostinger or Namecheap.", category: "Product" },
       { id: "p5-t2", text: "Build a responsive landing page or e-commerce shop using Shopify or Framer.", category: "Product" },
@@ -226,7 +226,7 @@ export const phasesData: Phase[] = [
       "Posting inconsistent low-quality graphics instead of value-first videos",
       "Failing to capture viewer emails, losing retargeting capability"
     ],
-    toolIds: ["canva", "predis-ai", "beehiiv", "taplio", "ahrefs", "semrush"],
+    toolIds: ["canva", "predis-ai", "beehiiv", "taplio", "ahrefs", "semrush", "capcut", "manychat", "creatify-ai", "shown-io", "virality-ai"],
     tasks: [
       { id: "p6-t1", text: "Design a professional logo and brand layout using Canva.", category: "Marketing" },
       { id: "p6-t2", text: "Set up company handle accounts on LinkedIn, Instagram, or YouTube.", category: "Marketing" },

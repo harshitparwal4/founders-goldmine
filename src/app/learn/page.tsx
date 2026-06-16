@@ -41,6 +41,17 @@ export default function Learn() {
       lessons: "Focus heavily on repeat customer purchase rate. Content marketing drives higher LTV than pure ads.",
       tools: ["Shopify", "Canva", "Shiprocket", "Razorpay"],
       url: "https://www.starterstory.com/stories/how-i-started-an-organic-skincare-brand"
+    },
+    {
+      id: "cs-3",
+      title: "AI-Driven E-commerce & Store Dropshipping Blueprint",
+      capital: "₹0 - ₹20,000",
+      timeline: "30 Days",
+      milestones: "Created AI storefront, validated products via spy tools, and launched AI video ads to scale to 10+ orders/day.",
+      mistakes: "Purchasing inventory upfront before validating product demand and ad conversion rates.",
+      lessons: "Target Indian Dropshipping margins: Product Cost (₹300) + Ads & Delivery (₹150) + Returns (₹100) vs Selling Price (₹999) = ₹450 profit per order (~₹1.35L/month on 10 orders/day).",
+      tools: ["BuildYourStore.ai", "SellTheTrend", "Creatify.ai", "Shown.io", "Manychat"],
+      url: "https://www.instagram.com/reel/DZMNP6BgCUy/"
     }
   ];
 
